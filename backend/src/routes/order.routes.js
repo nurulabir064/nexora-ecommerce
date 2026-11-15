@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import mongoose from 'mongoose';
-import { randomUUID, createHash } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import { z } from 'zod';
 import Cart from '../models/Cart.js';
 import Product from '../models/Product.js';
@@ -8,8 +8,9 @@ import Order from '../models/Order.js';
 import Coupon from '../models/Coupon.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import { hashCheckoutRequest, assertSameIdempotencyRequest } from '../utils/idempotency.js';
 const router = Router(); router.use(requireAuth);
-const addressSchema = z.object({ recipient: z.string().trim().min(2).max(80), phone: z.string().trim().regex(/^(?:\\+?88)?01[3-9]\\d{8}$/), addressLine: z.string().trim().min(8).max(240), district: z.string().trim().min(2).max(60), city: z.string().trim().min(2).max(60), postalCode: z.string().trim().max(12).optional().default('') });
+const addressSchema = z.object({ recipient: z.string().trim().min(2).max(80), phone: z.string().trim().regex(/^(?:\+?88)?01[3-9]\d{8}$/), addressLine: z.string().trim().min(8).max(240), district: z.string().trim().min(2).max(60), city: z.string().trim().min(2).max(60), postalCode: z.string().trim().max(12).optional().default('') });
 router.post('/', asyncHandler(async (req, res) => {
   const parsed = z.object({ shippingAddress: addressSchema, couponCode: z.string().trim().max(32).optional() }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Please check your shipping details.' });
@@ -17,15 +18,8 @@ router.post('/', asyncHandler(async (req, res) => {
   if (typeof idempotencyKey !== 'string' || !/^[a-f0-9-]{36}$/i.test(idempotencyKey)) {
     return res.status(400).json({ message: 'A valid Idempotency-Key UUID header is required.' });
   }
-  const requestHash = createHash('sha256').update(JSON.stringify(parsed.data)).digest('hex');
-  const assertSameRequest = order => {
-    if (order.requestHash && order.requestHash !== requestHash) {
-      const error = new Error('This Idempotency-Key was already used with different checkout details.');
-      error.statusCode = 409;
-      throw error;
-    }
-    return order;
-  };
+  const requestHash = hashCheckoutRequest(parsed.data);
+  const assertSameRequest = order => assertSameIdempotencyRequest(order, requestHash);
   const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey });
   if (existingOrder) return res.status(200).json({ order: assertSameRequest(existingOrder), replayed: true });
   const session = await mongoose.startSession(); let createdOrder; let replayed = false;
