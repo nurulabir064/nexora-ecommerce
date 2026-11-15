@@ -8,14 +8,25 @@ import Order from '../models/Order.js';
 import Coupon from '../models/Coupon.js';
 import { requireAuth } from '../middleware/auth.js';
 import { asyncHandler } from '../middleware/asyncHandler.js';
+import { hashCheckoutRequest, assertSameIdempotencyRequest } from '../utils/idempotency.js';
 const router = Router(); router.use(requireAuth);
 const addressSchema = z.object({ recipient: z.string().trim().min(2).max(80), phone: z.string().trim().regex(/^(?:\+?88)?01[3-9]\d{8}$/), addressLine: z.string().trim().min(8).max(240), district: z.string().trim().min(2).max(60), city: z.string().trim().min(2).max(60), postalCode: z.string().trim().max(12).optional().default('') });
 router.post('/', asyncHandler(async (req, res) => {
   const parsed = z.object({ shippingAddress: addressSchema, couponCode: z.string().trim().max(32).optional() }).safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Please check your shipping details.' });
-  const session = await mongoose.startSession(); let createdOrder;
+  const idempotencyKey = req.get('idempotency-key');
+  if (typeof idempotencyKey !== 'string' || !/^[a-f0-9-]{36}$/i.test(idempotencyKey)) {
+    return res.status(400).json({ message: 'A valid Idempotency-Key UUID header is required.' });
+  }
+  const requestHash = hashCheckoutRequest(parsed.data);
+  const assertSameRequest = order => assertSameIdempotencyRequest(order, requestHash);
+  const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey });
+  if (existingOrder) return res.status(200).json({ order: assertSameRequest(existingOrder), replayed: true });
+  const session = await mongoose.startSession(); let createdOrder; let replayed = false;
   try {
     await session.withTransaction(async () => {
+      const duplicate = await Order.findOne({ user: req.user._id, idempotencyKey }).session(session);
+      if (duplicate) { createdOrder = assertSameRequest(duplicate); replayed = true; return; }
       const cart = await Cart.findOne({ user: req.user._id }).session(session);
       if (!cart?.items.length) { const error = new Error('Your cart is empty.'); error.statusCode = 400; throw error; }
       const ids = cart.items.map(item => item.product);
@@ -40,11 +51,17 @@ router.post('/', asyncHandler(async (req, res) => {
         discount = Math.min(subtotal, Math.round(discount)); couponCode = coupon.code;
       }
       const shippingFee = subtotal >= 3000 ? 0 : 80;
-      [createdOrder] = await Order.create([{ orderNumber: `NX-${new Date().toISOString().slice(0,10).replaceAll('-','')}-${randomUUID().replaceAll('-', '').slice(0,10).toUpperCase()}`, user: req.user._id, items: orderItems, shippingAddress: parsed.data.shippingAddress, subtotal, shippingFee, discount, total: subtotal + shippingFee - discount, couponCode, paymentMethod: 'cod' }], { session });
+      [createdOrder] = await Order.create([{ orderNumber: `NX-${new Date().toISOString().slice(0,10).replaceAll('-','')}-${randomUUID().replaceAll('-', '').slice(0,10).toUpperCase()}`, idempotencyKey, requestHash, user: req.user._id, items: orderItems, shippingAddress: parsed.data.shippingAddress, subtotal, shippingFee, discount, total: subtotal + shippingFee - discount, couponCode, paymentMethod: 'cod' }], { session });
       await Cart.updateOne({ user: req.user._id }, { $set: { items: [] } }, { session });
     });
+  } catch (error) {
+    if (error.code === 11000) {
+      const replay = await Order.findOne({ user: req.user._id, idempotencyKey });
+      if (replay) return res.status(200).json({ order: assertSameRequest(replay), replayed: true });
+    }
+    throw error;
   } finally { await session.endSession(); }
-  res.status(201).json({ order: createdOrder });
+  res.status(replayed ? 200 : 201).json({ order: createdOrder, replayed });
 }));
 router.get('/mine', asyncHandler(async (req, res) => { const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50).select('-__v'); res.json({ orders }); }));
 router.get('/mine/:id', asyncHandler(async (req, res) => { const order = await Order.findOne({ _id: req.params.id, user: req.user._id }); if (!order) return res.status(404).json({ message: 'Order not found.' }); res.json({ order }); }));

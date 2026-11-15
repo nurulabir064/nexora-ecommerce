@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router';
 import { useQuery } from '@tanstack/react-query';
 import { api } from '../services/api';
@@ -52,13 +52,14 @@ export function CheckoutPage() {
   const [couponCode, setCouponCode] = useState('');
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const idempotencyKeyRef = useRef(crypto.randomUUID());
   const navigate = useNavigate();
 
   const submit = async event => {
     event.preventDefault(); setError(''); setSubmitting(true);
     try {
       await api.put('/cart', { items: cart.map(item => ({ productId: item.id, quantity: item.quantity })) });
-      const { data } = await api.post('/orders', { shippingAddress: form, ...(couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}) });
+      const { data } = await api.post('/orders', { shippingAddress: form, ...(couponCode.trim() ? { couponCode: couponCode.trim().toUpperCase() } : {}) }, { headers: { 'Idempotency-Key': idempotencyKeyRef.current } });
       clearCart();
       navigate('/orders', { state: { placedOrder: data.order } });
     } catch (requestError) {
