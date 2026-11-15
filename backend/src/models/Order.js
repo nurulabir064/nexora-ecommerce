@@ -13,6 +13,7 @@ const addressSchema = new mongoose.Schema({
 }, { _id: false });
 const orderSchema = new mongoose.Schema({
   orderNumber: { type: String, required: true, unique: true, index: true },
+  idempotencyKey: { type: String, maxlength: 64 },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   items: { type: [orderItemSchema], validate: v => v.length > 0 }, shippingAddress: { type: addressSchema, required: true },
   subtotal: { type: Number, required: true, min: 0 }, shippingFee: { type: Number, required: true, min: 0 },
@@ -22,4 +23,5 @@ const orderSchema = new mongoose.Schema({
   status: { type: String, enum: ['placed', 'confirmed', 'processing', 'shipped', 'delivered', 'cancelled'], default: 'placed', index: true }
 }, { timestamps: true });
 orderSchema.index({ user: 1, createdAt: -1 });
+orderSchema.index({ user: 1, idempotencyKey: 1 }, { unique: true, partialFilterExpression: { idempotencyKey: { $type: 'string' } } });
 export default mongoose.model('Order', orderSchema);
