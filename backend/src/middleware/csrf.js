@@ -2,7 +2,7 @@ import crypto from 'node:crypto';
 
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
-const tokenSecret = () => process.env.CSRF_SECRET || process.env.JWT_SECRET;
+const tokenSecret = () => process.env.CSRF_SECRET;
 
 function hasTrustedOrigin(req) {
   const configuredOrigin = process.env.APP_ORIGIN;
@@ -37,16 +37,19 @@ function bindingFor(req, res) {
 
 function createToken(binding) {
   const nonce = crypto.randomBytes(32).toString('hex');
-  const mac = crypto.createHmac('sha256', tokenSecret()).update(binding).update('.').update(nonce).digest('hex');
-  return `${nonce}.${mac}`;
+  const issuedAt = Date.now().toString();
+  const mac = crypto.createHmac('sha256', tokenSecret()).update(binding).update('.').update(nonce).update('.').update(issuedAt).digest('hex');
+  return `${nonce}.${issuedAt}.${mac}`;
 }
 
 function isValidToken(token, binding) {
-  if (typeof token !== 'string' || token.length !== 129) return false;
+  if (typeof token !== 'string' || token.length !== 143) return false;
   const parts = token.split('.');
-  if (parts.length !== 2 || !/^[a-f0-9]{64}$/.test(parts[0]) || !/^[a-f0-9]{64}$/.test(parts[1])) return false;
-  const expected = crypto.createHmac('sha256', tokenSecret()).update(binding).update('.').update(parts[0]).digest();
-  const actual = Buffer.from(parts[1], 'hex');
+  if (parts.length !== 3 || !/^[a-f0-9]{64}$/.test(parts[0]) || !/^\\d{13}$/.test(parts[1]) || !/^[a-f0-9]{64}$/.test(parts[2])) return false;
+  const issuedAt = Number(parts[1]);
+  if (!Number.isSafeInteger(issuedAt) || issuedAt > Date.now() + 60_000 || Date.now() - issuedAt > TOKEN_TTL_MS) return false;
+  const expected = crypto.createHmac('sha256', tokenSecret()).update(binding).update('.').update(parts[0]).update('.').update(parts[1]).digest();
+  const actual = Buffer.from(parts[2], 'hex');
   return actual.length === expected.length && crypto.timingSafeEqual(actual, expected);
 }
 
