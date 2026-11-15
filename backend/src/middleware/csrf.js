@@ -3,6 +3,7 @@ import crypto from 'node:crypto';
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const TOKEN_TTL_MS = 24 * 60 * 60 * 1000;
 const tokenSecret = () => process.env.CSRF_SECRET;
+const bindingCookieName = () => process.env.NODE_ENV === 'production' ? '__Host-nexora_csrf_binding' : 'nexora_csrf_binding';
 
 function hasTrustedOrigin(req) {
   const configuredOrigin = process.env.APP_ORIGIN;
@@ -21,10 +22,11 @@ function hasTrustedOrigin(req) {
 function bindingFor(req, res) {
   const session = req.cookies?.nexora_session;
   if (session) return session;
-  let anonymousBinding = req.cookies?.nexora_csrf_binding;
+  const cookieName = bindingCookieName();
+  let anonymousBinding = req.cookies?.[cookieName];
   if (!anonymousBinding) {
     anonymousBinding = crypto.randomBytes(32).toString('hex');
-    res.cookie('nexora_csrf_binding', anonymousBinding, {
+    res.cookie(cookieName, anonymousBinding, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: process.env.COOKIE_SAME_SITE || 'lax',
@@ -72,7 +74,7 @@ export function requireCsrf(req, res, next) {
   if (!hasTrustedOrigin(req)) return res.status(403).json({ message: 'Request origin is not allowed.' });
   const cookie = req.cookies?.nexora_csrf;
   const header = req.get('x-csrf-token');
-  const binding = req.cookies?.nexora_session || req.cookies?.nexora_csrf_binding;
+  const binding = req.cookies?.nexora_session || req.cookies?.[bindingCookieName()];
   if (!binding || typeof cookie !== 'string' || typeof header !== 'string' || cookie !== header || !isValidToken(header, binding)) {
     return res.status(403).json({ message: 'CSRF validation failed. Refresh and try again.' });
   }
