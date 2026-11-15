@@ -18,8 +18,11 @@ const cookieOptions = () => {
   if (sameSite === 'none' && !secure) throw new Error('COOKIE_SAME_SITE=none requires NODE_ENV=production and secure cookies.');
   return { httpOnly: true, secure, sameSite, path: '/', maxAge: 24 * 60 * 60 * 1000 };
 };
-function setSession(res, userId) {
-  const token = jwt.sign({}, process.env.JWT_SECRET, { subject: String(userId), expiresIn: process.env.JWT_EXPIRES_IN || '1d', issuer: 'nexora-api', audience: 'nexora-web' });
+function setSession(res, user) {
+  const token = jwt.sign({ sessionVersion: user.sessionVersion }, process.env.JWT_SECRET, {
+    subject: String(user._id), expiresIn: process.env.JWT_EXPIRES_IN || '1d',
+    issuer: 'nexora-api', audience: 'nexora-web', algorithm: 'HS256'
+  });
   res.cookie('nexora_session', token, cookieOptions());
 }
 const publicUser = user => ({ id: user.id, name: user.name, email: user.email, role: user.role });
@@ -31,18 +34,32 @@ router.post('/register', authLimit, asyncHandler(async (req, res) => {
   const passwordHash = await argon2.hash(password, { type: argon2.argon2id, memoryCost: 19456, timeCost: 2, parallelism: 1 });
   try {
     const user = await User.create({ name, email, passwordHash });
-    setSession(res, user._id); res.status(201).json({ user: publicUser(user) });
+    setSession(res, user); res.status(201).json({ user: publicUser(user) });
   } catch (error) { if (error.code === 11000) return res.status(409).json({ message: 'Email is already registered.' }); throw error; }
 }));
 router.post('/login', authLimit, asyncHandler(async (req, res) => {
   const parsed = loginSchema.safeParse(req.body);
   if (!parsed.success) return res.status(400).json({ message: 'Invalid email or password.' });
-  const user = await User.findOne({ email: parsed.data.email.toLowerCase().trim() }).select('+passwordHash');
+  const user = await User.findOne({ email: parsed.data.email.toLowerCase().trim() }).select('+passwordHash +sessionVersion');
   const valid = user && user.isActive && await argon2.verify(user.passwordHash, parsed.data.password);
   if (!valid) return res.status(401).json({ message: 'Invalid email or password.' });
-  setSession(res, user._id); res.json({ user: publicUser(user) });
+  user.sessionVersion += 1;
+  await user.save();
+  setSession(res, user); res.json({ user: publicUser(user) });
 }));
-router.post('/logout', (req, res) => { res.clearCookie('nexora_session', { ...cookieOptions(), maxAge: undefined }); res.status(204).end(); });
+router.post('/logout', asyncHandler(async (req, res) => {
+  const token = req.cookies?.nexora_session;
+  if (token) {
+    try {
+      const payload = jwt.verify(token, process.env.JWT_SECRET, { issuer: 'nexora-api', audience: 'nexora-web', algorithms: ['HS256'] });
+      await User.updateOne({ _id: payload.sub, sessionVersion: payload.sessionVersion }, { $inc: { sessionVersion: 1 } });
+    } catch { /* An expired or invalid token is already unusable. */ }
+  }
+  res.clearCookie('nexora_session', { ...cookieOptions(), maxAge: undefined });
+  res.clearCookie('nexora_csrf_binding', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.COOKIE_SAME_SITE || 'lax', path: '/' });
+  res.clearCookie('nexora_csrf', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.COOKIE_SAME_SITE || 'lax', path: '/' });
+  res.status(204).end();
+}));
 router.get('/me', requireAuth, (req, res) => res.json({ user: publicUser(req.user) }));
 router.patch('/me', requireAuth, asyncHandler(async (req, res) => {
   const parsed = z.object({ name: z.string().trim().min(2).max(80) }).safeParse(req.body);
