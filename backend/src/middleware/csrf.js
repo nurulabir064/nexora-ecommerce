@@ -45,7 +45,7 @@ function createToken(binding) {
 function isValidToken(token, binding) {
   if (typeof token !== 'string' || token.length !== 143) return false;
   const parts = token.split('.');
-  if (parts.length !== 3 || !/^[a-f0-9]{64}$/.test(parts[0]) || !/^\\d{13}$/.test(parts[1]) || !/^[a-f0-9]{64}$/.test(parts[2])) return false;
+  if (parts.length !== 3 || !/^[a-f0-9]{64}$/.test(parts[0]) || !/^\d{13}$/.test(parts[1]) || !/^[a-f0-9]{64}$/.test(parts[2])) return false;
   const issuedAt = Number(parts[1]);
   if (!Number.isSafeInteger(issuedAt) || issuedAt > Date.now() + 60_000 || Date.now() - issuedAt > TOKEN_TTL_MS) return false;
   const expected = crypto.createHmac('sha256', tokenSecret()).update(binding).update('.').update(parts[0]).update('.').update(parts[1]).digest();
