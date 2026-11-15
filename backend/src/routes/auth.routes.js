@@ -56,7 +56,7 @@ router.post('/logout', asyncHandler(async (req, res) => {
     } catch { /* An expired or invalid token is already unusable. */ }
   }
   res.clearCookie('nexora_session', { ...cookieOptions(), maxAge: undefined });
-  res.clearCookie('nexora_csrf_binding', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.COOKIE_SAME_SITE || 'lax', path: '/' });
+  res.clearCookie(process.env.NODE_ENV === 'production' ? '__Host-nexora_csrf_binding' : 'nexora_csrf_binding', { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: process.env.COOKIE_SAME_SITE || 'lax', path: '/' });
   res.clearCookie('nexora_csrf', { httpOnly: false, secure: process.env.NODE_ENV === 'production', sameSite: process.env.COOKIE_SAME_SITE || 'lax', path: '/' });
   res.status(204).end();
 }));
