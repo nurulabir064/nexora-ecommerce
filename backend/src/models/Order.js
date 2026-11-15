@@ -14,6 +14,7 @@ const addressSchema = new mongoose.Schema({
 const orderSchema = new mongoose.Schema({
   orderNumber: { type: String, required: true, unique: true, index: true },
   idempotencyKey: { type: String, maxlength: 64 },
+  requestHash: { type: String, minlength: 64, maxlength: 64 },
   user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true, index: true },
   items: { type: [orderItemSchema], validate: v => v.length > 0 }, shippingAddress: { type: addressSchema, required: true },
   subtotal: { type: Number, required: true, min: 0 }, shippingFee: { type: Number, required: true, min: 0 },
