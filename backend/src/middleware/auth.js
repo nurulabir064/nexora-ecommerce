@@ -9,7 +9,7 @@ export async function requireAuth(req, res, next) {
       audience: 'nexora-web',
       algorithms: ['HS256']
     });
-    const user = await User.findById(payload.sub).select('name email role isActive sessionVersion');
+    const user = await User.findById(payload.sub).select('name email role isActive +sessionVersion');
     if (!user || !user.isActive || payload.sessionVersion !== user.sessionVersion) {
       return res.status(401).json({ message: 'Session is no longer valid' });
     }
