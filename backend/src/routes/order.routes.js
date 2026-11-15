@@ -19,11 +19,11 @@ router.post('/', asyncHandler(async (req, res) => {
   }
   const existingOrder = await Order.findOne({ user: req.user._id, idempotencyKey });
   if (existingOrder) return res.status(200).json({ order: existingOrder, replayed: true });
-  const session = await mongoose.startSession(); let createdOrder;
+  const session = await mongoose.startSession(); let createdOrder; let replayed = false;
   try {
     await session.withTransaction(async () => {
       const duplicate = await Order.findOne({ user: req.user._id, idempotencyKey }).session(session);
-      if (duplicate) { createdOrder = duplicate; return; }
+      if (duplicate) { createdOrder = duplicate; replayed = true; return; }
       const cart = await Cart.findOne({ user: req.user._id }).session(session);
       if (!cart?.items.length) { const error = new Error('Your cart is empty.'); error.statusCode = 400; throw error; }
       const ids = cart.items.map(item => item.product);
@@ -58,7 +58,7 @@ router.post('/', asyncHandler(async (req, res) => {
     }
     throw error;
   } finally { await session.endSession(); }
-  res.status(createdOrder ? 201 : 200).json({ order: createdOrder, replayed: false });
+  res.status(replayed ? 200 : 201).json({ order: createdOrder, replayed });
 }));
 router.get('/mine', asyncHandler(async (req, res) => { const orders = await Order.find({ user: req.user._id }).sort({ createdAt: -1 }).limit(50).select('-__v'); res.json({ orders }); }));
 router.get('/mine/:id', asyncHandler(async (req, res) => { const order = await Order.findOne({ _id: req.params.id, user: req.user._id }); if (!order) return res.status(404).json({ message: 'Order not found.' }); res.json({ order }); }));
