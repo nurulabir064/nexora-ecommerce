@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import { formatBDT } from '../data/products';
 import { STORE_PHONE_LOCAL, STORE_TEL_URL, STORE_WHATSAPP_URL } from '../data/storeContact';
+import CustomizationStudio from '../components/CustomizationStudio';
 
 const statusOptions = {
   placed: ['confirmed', 'cancelled'],
@@ -14,7 +15,7 @@ const statusOptions = {
   delivered: [],
   cancelled: []
 };
-const tabs = ['Overview', 'Products', 'Categories', 'Orders', 'Coupons', 'Reviews', 'Customers'];
+const tabs = ['Overview', 'Products', 'Categories', 'Orders', 'Coupons', 'Reviews', 'Customers', 'Customization'];
 const inputClass = 'w-full rounded-xl border border-slate-200 px-4 py-3 text-xs outline-none focus:border-blue-400';
 
 function Metric({ label, value, detail }) {
@@ -101,6 +102,8 @@ export function AdminPage() {
     <div className="sticky top-[76px] z-20 -mx-3 mt-7 flex gap-2 overflow-x-auto bg-white/95 px-3 py-3 backdrop-blur">{tabs.map(item => <button key={item} onClick={() => { setTab(item); setNotice(''); setError(''); }} className={`shrink-0 rounded-full px-4 py-2.5 text-xs font-bold ${tab === item ? 'bg-slate-900 text-white' : 'border border-slate-200 text-slate-600'}`}>{item}</button>)}</div>
     {notice && <p role="status" className="mt-5 rounded-xl bg-emerald-50 px-4 py-3 text-xs text-emerald-800">{notice}</p>}
     {error && <p role="alert" className="mt-5 rounded-xl bg-rose-50 px-4 py-3 text-xs text-rose-700">{error}</p>}
+
+    {tab === 'Customization' && <CustomizationStudio/>}
 
     {tab === 'Overview' && <><section className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">{overview.isLoading ? <p className="text-sm text-slate-500">Loading overview…</p> : overview.isError ? <p className="text-sm text-rose-600">Could not load overview.</p> : <><Metric label="Active products" value={overview.data.products} detail="Published catalogue"/><Metric label="Customers" value={overview.data.customers} detail="Active customer accounts"/><Metric label="Orders" value={overview.data.orders} detail="All order statuses"/><Metric label="Recorded revenue" value={formatBDT(overview.data.revenue)} detail="Orders with confirmed payment"/></>}</section><section className="mt-10"><PanelHeading eyebrow="Fulfillment" title="Recent orders"><button onClick={() => setTab('Orders')} className="text-xs font-bold text-blue-600">View all orders →</button></PanelHeading><OrdersTable orders={orders.data || []} loading={orders.isLoading} error={orders.isError} onChange={(id, status) => statusMutation.mutate({ id, status })} onMarkPaid={id => paymentMutation.mutate(id)} pending={statusMutation.isPending || paymentMutation.isPending}/></section><section className="mt-10"><PanelHeading eyebrow="Catalogue" title="Recent products"><button onClick={() => { setEditingId(null); setProductForm({ name: '', slug: '', description: '', category: '', price: '', compareAtPrice: '', stock: '', image: '' }); setTab('Products'); }} className="text-xs font-bold text-blue-600">Add product →</button></PanelHeading><ProductsTable products={(products.data || []).slice(0, 6)} loading={products.isLoading} error={products.isError} onEdit={beginEdit} onArchive={id => archiveProduct.mutate(id)} pending={archiveProduct.isPending}/></section></>}
 
