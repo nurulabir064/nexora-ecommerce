@@ -13,6 +13,10 @@ const initialDraft = {
   showCategories: true,
   showFeatured: true,
   showBenefits: true,
+  showPromoStrip: true,
+  promoText: 'A little extra for your first order · Use NEXORA10',
+  demoShippingFee: '80',
+  demoFreeShippingThreshold: '3000',
   productColumns: '4',
   adminTitle: 'NEXORA management',
   adminAccent: '#315efb',
@@ -69,6 +73,8 @@ function StorePreview({ draft }) {
     {draft.showCategories && <section className="border-t border-slate-100 px-4 py-5 sm:px-6"><div className="mb-3 flex items-center justify-between"><h4 className="text-sm font-extrabold text-slate-900">Shop by category</h4><span className="text-[9px]" style={{ color: 'var(--demo-brand)' }}>View all ↗</span></div><div className="grid grid-cols-3 gap-2"><div className="rounded-xl bg-slate-50 p-3 text-center text-[10px] font-semibold">Lifestyle</div><div className="rounded-xl bg-slate-50 p-3 text-center text-[10px] font-semibold">Accessories</div><div className="rounded-xl bg-slate-50 p-3 text-center text-[10px] font-semibold">Home</div></div></section>}
     {draft.showFeatured && <section className="border-t border-slate-100 px-4 py-5 sm:px-6"><div className="mb-3 flex items-center justify-between"><h4 className="text-sm font-extrabold text-slate-900">Picked for your everyday</h4><span className="text-[9px]" style={{ color: 'var(--demo-brand)' }}>Shop all ↗</span></div><div className="grid gap-2" style={{ gridTemplateColumns: `repeat(${draft.productColumns}, minmax(0, 1fr))` }}>{demoProducts.slice(0, Number(draft.productColumns)).map(product => <article key={product.name} className="min-w-0"><div className="aspect-square rounded-xl" style={{ background: product.color }}></div><p className="mt-2 truncate text-[9px] font-semibold text-slate-800">{product.name}</p><p className="text-[9px] text-slate-400">{product.category}</p><p className="mt-1 text-[9px] font-bold text-slate-800">{product.price}</p></article>)}</div></section>}
     {draft.showBenefits && <div className="grid grid-cols-3 gap-2 border-t border-slate-100 px-4 py-4 text-center text-[9px] font-semibold text-slate-500 sm:px-6"><span>✓ Quality first</span><span>↺ Easy returns</span><span>♡ Customer care</span></div>}
+    {draft.showPromoStrip && <div className="px-4 py-3 text-center text-[10px] font-semibold text-white" style={{ background: 'var(--demo-brand)' }}>{draft.promoText || 'Your promotional message'}</div>}
+    <div className="border-t border-slate-100 px-4 py-4 sm:px-6"><p className="text-[10px] font-bold text-slate-800">Delivery preview (sample only)</p><div className="mt-2 flex flex-wrap justify-between gap-2 text-[9px] text-slate-500"><span>Delivery fee: ৳{draft.demoShippingFee || '0'}</span><span>Free delivery from ৳{draft.demoFreeShippingThreshold || '0'}</span></div></div>
     <footer className="px-4 py-4 text-center text-[9px] text-slate-400" style={{ background: '#f8fafc' }}>© 2026 {draft.storeName || 'YOUR STORE'} · Preview only</footer>
   </div>;
 }
@@ -79,6 +85,7 @@ function AdminPreview({ draft }) {
     <div className={draft.compactAdmin ? 'grid grid-cols-2 gap-2 p-3' : 'grid grid-cols-2 gap-3 p-5'}>
       {['Products','Orders','Customers','Revenue'].map((label,index)=><div key={label} className={draft.compactAdmin?'rounded-lg border border-slate-100 p-3':'rounded-xl border border-slate-100 p-4'}><p className="text-[10px] text-slate-500">{label}</p><p className="mt-2 text-xl font-black text-slate-900">{['08','00','01','৳0'][index]}</p><div className="mt-2 h-1.5 rounded-full bg-slate-100"><div className="h-1.5 w-2/3 rounded-full" style={{ background: draft.adminAccent }}></div></div></div>)}
     </div>
+    {draft.showAdminQuickActions && <div className="mx-3 mb-3 grid grid-cols-2 gap-2"><div className="rounded-lg border border-slate-100 p-3 text-[9px] font-semibold text-slate-600">＋ Add product</div><div className="rounded-lg border border-slate-100 p-3 text-[9px] font-semibold text-slate-600">↗ View orders</div></div>}
     <div className="mx-3 mb-3 rounded-xl border border-slate-100 p-3"><p className="text-[10px] font-bold text-slate-800">Recent activity</p><p className="mt-2 text-[9px] text-slate-400">Demo content only · no customer or order data loaded</p></div>
   </div>;
 }
@@ -120,8 +127,9 @@ export default function CustomizationStudio() {
             <ToggleField label="Show categories section" checked={draft.showCategories} onChange={value=>update('showCategories',value)}/>
             <ToggleField label="Show featured products" checked={draft.showFeatured} onChange={value=>update('showFeatured',value)}/>
             <ToggleField label="Show benefits row" checked={draft.showBenefits} onChange={value=>update('showBenefits',value)}/>
+            <ToggleField label="Show promotional strip" checked={draft.showPromoStrip} onChange={value=>update('showPromoStrip',value)}/>
           </div>
-          <div className="mt-4"><Field label="Product columns"><select value={draft.productColumns} onChange={event=>update('productColumns',event.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs"><option value="2">2 columns</option><option value="3">3 columns</option><option value="4">4 columns</option></select></Field></div>
+          <div className="mt-4 space-y-3"><Field label="Product columns"><select value={draft.productColumns} onChange={event=>update('productColumns',event.target.value)} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-xs"><option value="2">2 columns</option><option value="3">3 columns</option><option value="4">4 columns</option></select></Field><TextField label="Promo strip text" value={draft.promoText} onChange={value=>update('promoText',value)} maxLength={90}/><div className="grid grid-cols-2 gap-3"><TextField label="Demo delivery fee (BDT)" value={draft.demoShippingFee} onChange={value=>update('demoShippingFee',value)} maxLength={6}/><TextField label="Demo free delivery threshold (BDT)" value={draft.demoFreeShippingThreshold} onChange={value=>update('demoFreeShippingThreshold',value)} maxLength={7}/></div><p className="text-[10px] leading-4 text-amber-700">These delivery values are preview examples only. Checkout continues using the existing backend rules.</p></div>
         </div>
         <div className="rounded-2xl border border-slate-100 bg-white p-5">
           <div className="mb-4 flex items-center gap-2"><LayoutDashboard size={16} className="text-blue-600"/><h2 className="text-sm font-extrabold">Admin appearance</h2></div>
@@ -129,6 +137,7 @@ export default function CustomizationStudio() {
             <TextField label="Admin heading" value={draft.adminTitle} onChange={value=>update('adminTitle',value)} maxLength={50}/>
             <ColorField label="Admin accent color" value={draft.adminAccent} onChange={value=>update('adminAccent',value)}/>
             <ToggleField label="Compact dashboard cards" checked={draft.compactAdmin} onChange={value=>update('compactAdmin',value)}/>
+            <ToggleField label="Show admin quick actions" checked={draft.showAdminQuickActions} onChange={value=>update('showAdminQuickActions',value)}/>
           </div>
         </div>
       </div>
