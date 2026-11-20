@@ -12,7 +12,7 @@ export function readPreviewTheme() {
   try {
     const active = localStorage.getItem(PREVIEW_ACTIVE_KEY) === 'true';
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-    return resolvePreviewTheme(active, saved?.draft);
+    return resolvePreviewTheme(active && saved?.schemaVersion === 1, saved?.draft);
   } catch {
     return resolvePreviewTheme(false, null);
   }
