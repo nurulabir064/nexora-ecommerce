@@ -27,7 +27,7 @@ export default function SiteLayout() {
     <header className="sticky top-0 z-30 border-b border-slate-100 bg-white/90 backdrop-blur-xl">
       <div className="container flex h-[76px] items-center gap-5 md:gap-8">
         <button className="md:hidden" onClick={() => setMenuOpen(!menuOpen)} aria-label="Toggle navigation">{menuOpen ? <X/> : <Menu/>}</button>
-        <Link to="/" className="display text-2xl font-extrabold tracking-tight" style={{ color: theme.active ? draft.darkColor : '#172b4d' }}>{theme.active ? draft.storeName : <>NEX<span className="text-blue-600">O</span>RA.</span><span style={{ color: theme.active ? draft.primaryColor : '#2563eb' }}>.</span></Link>
+        <Link to="/" className="display text-2xl font-extrabold tracking-tight" style={{ color: theme.active ? draft.darkColor : '#172b4d' }}>{theme.active ? draft.storeName : <>NEX<span className="text-blue-600">O</span>RA</>}<span style={{ color: theme.active ? draft.primaryColor : '#2563eb' }}>.</span></Link>
         <nav className="hidden items-center gap-7 text-xs font-semibold text-slate-600 md:flex"><NavLink to="/shop">Shop</NavLink><a href="/#categories">Categories</a><a href="/#story">Our story</a></nav>
         <form action="/shop" className="ml-auto hidden max-w-md flex-1 items-center gap-3 rounded-full border border-slate-200 bg-slate-50 px-4 py-3 md:flex"><Search size={16} className="text-slate-400"/><input name="q" placeholder="Search products, brands and more..." className="w-full bg-transparent text-xs outline-none"/></form>
         <div className="ml-auto flex items-center gap-4 md:ml-0">
