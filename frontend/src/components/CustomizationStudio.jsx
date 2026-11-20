@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Eye, RotateCcw, Store, LayoutDashboard, ShieldCheck, Image as ImageIcon, Palette } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { Eye, RotateCcw, Store, LayoutDashboard, ShieldCheck, Image as ImageIcon, Palette, Save, Download, Upload } from 'lucide-react';
 
 const initialDraft = {
   storeName: 'NEXORA',
@@ -23,6 +23,35 @@ const initialDraft = {
   compactAdmin: false,
   showAdminQuickActions: true
 };
+
+const STORAGE_KEY = 'nexora-customization-demo-v1';
+
+function validateDraft(value) {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  for (const [key, defaultValue] of Object.entries(initialDraft)) {
+    const item = value[key];
+    if (typeof defaultValue === 'boolean') {
+      if (typeof item !== 'boolean') return false;
+    } else if (typeof defaultValue === 'string') {
+      if (typeof item !== 'string') return false;
+    } else return false;
+  }
+  const limits = { storeName: 32, announcement: 100, heroEyebrow: 70, heroTitle: 90, heroDescription: 240, heroImage: 500, promoText: 90, demoShippingFee: 6, demoFreeShippingThreshold: 8, adminTitle: 50 };
+  if (Object.entries(limits).some(([key, max]) => value[key].length > max)) return false;
+  if (!['2', '3', '4'].includes(value.productColumns)) return false;
+  if (!['#' + value.primaryColor.slice(1), '#' + value.darkColor.slice(1), '#' + value.adminAccent.slice(1)].every(color => /^#[0-9a-fA-F]{6}$/.test(color))) return false;
+  if (!/^\\d{0,6}$/.test(value.demoShippingFee) || !/^\\d{0,8}$/.test(value.demoFreeShippingThreshold)) return false;
+  if (value.heroImage) {
+    try { if (new URL(value.heroImage).protocol !== 'https:') return false; } catch { return false; }
+  }
+  return true;
+}
+
+function parseImportedDraft(text) {
+  const parsed = JSON.parse(text);
+  if (parsed?.schemaVersion !== 1 || !validateDraft(parsed.draft)) throw new Error('This file is not a valid NEXORA demo configuration.');
+  return parsed.draft;
+}
 
 const demoProducts = [
   { name: 'Everyday Essential', category: 'Lifestyle', price: '৳1,250', color: '#e8edf5' },
@@ -94,14 +123,71 @@ function AdminPreview({ draft }) {
 export default function CustomizationStudio() {
   const [draft, setDraft] = useState(initialDraft);
   const [preview, setPreview] = useState('store');
-  const update = (key, value) => setDraft(current => ({ ...current, [key]: value }));
-  const reset = () => setDraft(initialDraft);
+  const [notice, setNotice] = useState('');
+  const [savedAt, setSavedAt] = useState('');
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(STORAGE_KEY);
+      if (!saved) return;
+      const parsed = JSON.parse(saved);
+      if (validateDraft(parsed?.draft)) {
+        setDraft(parsed.draft);
+        setSavedAt(parsed.savedAt || '');
+      } else localStorage.removeItem(STORAGE_KEY);
+    } catch { localStorage.removeItem(STORAGE_KEY); }
+  }, []);
+  const update = (key, value) => { setDraft(current => ({ ...current, [key]: value })); setNotice(''); };
+  const saveDraft = () => {
+    try {
+      if (!validateDraft(draft)) { setNotice('Please correct the invalid values before saving.'); return; }
+      const timestamp = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: 1, savedAt: timestamp, draft }));
+      setSavedAt(timestamp);
+      setNotice('Draft saved in this browser. It is not published or applied to the live store.');
+    } catch { setNotice('Could not save in this browser. Check storage availability.'); }
+  };
+  const exportDraft = () => {
+    const payload = { schemaVersion: 1, exportedAt: new Date().toISOString(), draft };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = 'nexora-customization-demo.json';
+    link.click();
+    URL.revokeObjectURL(url);
+    setNotice('Configuration exported. It is a proposal file, not a live-store update.');
+  };
+  const importDraft = async event => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+    if (!file) return;
+    if (file.size > 100_000) { setNotice('Configuration file is too large.'); return; }
+    try {
+      const imported = parseImportedDraft(await file.text());
+      setDraft(imported);
+      setSavedAt('');
+      setNotice('Configuration imported into preview. Save it locally if you want to keep it in this browser.');
+    } catch { setNotice('Import failed. Choose a valid NEXORA configuration JSON file.'); }
+  };
+  const reset = () => {
+    setDraft(initialDraft);
+    setSavedAt('');
+    setNotice('Preview reset to the default demo.');
+    try { localStorage.removeItem(STORAGE_KEY); } catch { /* storage may be unavailable */ }
+  };
 
   return <section className="mt-5 space-y-5">
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
       <div className="flex gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-amber-700" size={18}/><div><p className="text-xs font-bold text-amber-900">Demo mode · Changes are temporary</p><p className="mt-1 max-w-2xl text-[11px] leading-5 text-amber-800">This studio uses local page state and sample preview data only. It does not call the API, save settings, or modify products, orders, delivery fees, or the database.</p></div></div>
-      <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><RotateCcw size={13}/> Reset demo</button>
+      <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={saveDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Save size={13}/> Save draft</button>
+        <button type="button" onClick={exportDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Download size={13}/> Export JSON</button>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Upload size={13}/> Import JSON<input type="file" accept="application/json,.json" onChange={importDraft} className="sr-only"/></label>
+        <button type="button" onClick={reset} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><RotateCcw size={13}/> Reset demo</button>
+      </div>
     </div>
+    {notice && <p role="status" className="rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">{notice}</p>}
+    {savedAt && <p className="text-[10px] text-slate-400">Saved locally in this browser: {new Date(savedAt).toLocaleString()}</p>}
 
     <div className="grid gap-5 xl:grid-cols-[minmax(260px,.72fr)_minmax(0,1.28fr)]">
       <div className="space-y-5">
