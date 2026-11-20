@@ -20,7 +20,7 @@ The admin page still uses the existing API for its other dashboard data. The Stu
 - Sample product-grid columns (responsive preview)
 - Sample delivery fee and free-delivery threshold (display only)
 - Admin preview title/accent, compact cards and quick-action visibility
-- Store/Admin preview switch and Reset Demo
+- Store/Admin preview switch, Apply storefront preview and Reset Demo
 - Save a draft in this browser (localStorage), import/export versioned JSON configuration
 
 ## Important boundaries
@@ -28,7 +28,8 @@ The admin page still uses the existing API for its other dashboard data. The Stu
 - Export JSON creates a configuration file that can be transferred to another browser; Import JSON validates the schema and loads it into the preview.
 - The preview uses sample products and sample admin metrics, not actual customer/store data.
 - Delivery values are sample text only. Checkout pricing and backend settings are not changed.
-- Local Save/Import/Export does not publish or modify the actual storefront. The JSON is a proposal/configuration snapshot, not a live theme settings file.
+- Apply storefront preview saves the draft locally and applies its store identity, colors, hero content, homepage sections and sample delivery display values to the actual Home page in this browser only. A visible preview banner lets you return to Customization or exit preview.
+- Local Save/Import/Export and Apply preview do not publish or modify the actual storefront for other users. The JSON is a proposal/configuration snapshot, not a live theme settings file.
 - It is not a tenant/multi-store system and does not provide a customer-facing theme editor.
 - External hero image previews accept HTTPS URLs. Confirm image licensing and availability before using an image in a client deliverable.
 - Do not describe the demo as a production customization feature or promise persistence.
@@ -36,7 +37,7 @@ The admin page still uses the existing API for its other dashboard data. The Stu
 ## Customizing it for a client
 1. Gather the client's logo, brand colors, store name, product categories, copy, images and required pages.
 2. Agree on the exact scope (design, product data, content, integrations, hosting, support and revisions).
-3. Use the Studio to illustrate the proposed visual direction. Save the draft locally and export the JSON configuration for the handoff. Implement the approved values in the actual storefront; the JSON does not apply itself.
+3. Use the Studio to illustrate the proposed visual direction, apply the local storefront preview, and save/export the JSON configuration for handoff. Implement the approved values in the production storefront/theme code; local preview does not apply to other visitors.
 4. Implement approved values in the actual React storefront and its theme/layout components. Do not simply change demo state and claim the live store is customized.
 5. Add and verify client-owned product images and content; test all API-backed commerce flows and admin permissions.
 6. Deploy to a client-approved environment, test mobile and desktop, and hand over documented credentials through a secure method (never in source control).
