@@ -84,3 +84,10 @@ Last source inspection: 20 November 2026. This update includes a code/CI review 
 - Follow-up branch `feat/customization-draft-save-export` adds browser-local Save Draft, versioned JSON export/import, validation and reset-clears-local-draft.
 - Settings are stored only in this browser's localStorage; no API/database mutation or live publish. Export/import is a handoff mechanism for preview values, not a production theme deployment.
 - Added pure validation/import tests for valid defaults, malformed colors, invalid columns/numbers/URLs, missing or extra keys, and unsupported import versions. CI still needs to run for the latest commit; browser storage and file-download/import behavior still need real browser verification. The branch has not been merged or deployed.
+
+
+## Local storefront theme preview (20 November 2026)
+- Follow-up PR #4 extends the demo with a browser-local Apply storefront preview. It applies saved configuration to the actual Home page/layout in the same browser and shows a banner with Back to customization/Exit preview controls.
+- Preview changes store name, announcement bar, brand colors, hero content/image, category/featured/benefit/promo visibility, product-grid columns and sample delivery display. Checkout and backend delivery calculations remain unchanged.
+- Preview flag and draft use localStorage only. No public visitors, backend/database settings, production theme, product/order data or deployment are changed.
+- Latest follow-up CI is pending after this code update; manual browser/mobile acceptance is still required.
