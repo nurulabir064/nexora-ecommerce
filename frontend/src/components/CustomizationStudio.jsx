@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
 import { initialDraft, STORAGE_KEY, validateDraft, parseImportedDraft } from '../data/customizationDraft.js';
+import { PREVIEW_ACTIVE_KEY } from '../data/previewTheme.js';
+import { useNavigate } from 'react-router';
 import { Eye, RotateCcw, Store, LayoutDashboard, ShieldCheck, Image as ImageIcon, Palette, Save, Download, Upload } from 'lucide-react';
 
 const demoProducts = [
@@ -74,6 +76,7 @@ export default function CustomizationStudio() {
   const [preview, setPreview] = useState('store');
   const [notice, setNotice] = useState('');
   const [savedAt, setSavedAt] = useState('');
+  const navigate = useNavigate();
   useEffect(() => {
     try {
       const saved = localStorage.getItem(STORAGE_KEY);
@@ -94,6 +97,16 @@ export default function CustomizationStudio() {
       setSavedAt(timestamp);
       setNotice('Draft saved in this browser. It is not published or applied to the live store.');
     } catch { setNotice('Could not save in this browser. Check storage availability.'); }
+  };
+  const applyPreview = () => {
+    try {
+      if (!validateDraft(draft)) { setNotice('Please correct the invalid values before applying the preview.'); return; }
+      const timestamp = new Date().toISOString();
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ schemaVersion: 1, savedAt: timestamp, draft }));
+      localStorage.setItem(PREVIEW_ACTIVE_KEY, 'true');
+      setSavedAt(timestamp);
+      navigate('/');
+    } catch { setNotice('Could not apply the preview. Check browser storage availability.'); }
   };
   const exportDraft = () => {
     const payload = { schemaVersion: 1, exportedAt: new Date().toISOString(), draft };
@@ -129,6 +142,7 @@ export default function CustomizationStudio() {
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
       <div className="flex gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-amber-700" size={18}/><div><p className="text-xs font-bold text-amber-900">Demo mode · Changes are temporary</p><p className="mt-1 max-w-2xl text-[11px] leading-5 text-amber-800">This studio uses sample preview data. Drafts may be saved only in this browser or exported as JSON; it does not call the API, publish settings, or modify products, orders, delivery fees, or the database.</p></div></div>
       <div className="flex flex-wrap gap-2">
+        <button type="button" onClick={applyPreview} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Eye size={13}/> Apply storefront preview</button>
         <button type="button" onClick={saveDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Save size={13}/> Save draft</button>
         <button type="button" onClick={exportDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Download size={13}/> Export JSON</button>
         <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Upload size={13}/> Import JSON<input type="file" accept="application/json,.json" onChange={importDraft} className="sr-only"/></label>
