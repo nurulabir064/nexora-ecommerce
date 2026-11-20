@@ -78,3 +78,9 @@ Last source inspection: 20 November 2026. This update includes a code/CI review 
 - Added [Customization demo guide](CUSTOMIZATION-DEMO.md) describing local run steps, demo boundaries and a client customization/handoff workflow.
 - PR CI run [#44400286659](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44400286659) completed successfully for commit `eef70ce86faac40499ca578917896bd8c7e69205`. A subsequent code/documentation update was made on the PR branch and requires its own CI run; no browser/mobile visual inspection has been performed here.
 - **Not a production theme editor:** customization values do not save/export and are not applied to the real storefront. Client customization requires implementing approved values in the storefront, then integration testing and deployment.
+
+
+## Customization draft workflow (20 November 2026)
+- Follow-up branch `feat/customization-draft-save-export` adds browser-local Save Draft, versioned JSON export/import, validation and reset-clears-local-draft.
+- Settings are stored only in this browser's localStorage; no API/database mutation or live publish. Export/import is a handoff mechanism for preview values, not a production theme deployment.
+- Browser storage and file-import behavior still need CI and real browser verification. The branch has not been merged or deployed.
