@@ -90,4 +90,8 @@ Last source inspection: 20 November 2026. This update includes a code/CI review 
 - Follow-up PR #4 extends the demo with a browser-local Apply storefront preview. It applies saved configuration to the actual Home page/layout in the same browser and shows a banner with Back to customization/Exit preview controls.
 - Preview changes store name, announcement bar, brand colors, hero content/image, category/featured/benefit/promo visibility, product-grid columns and sample delivery display. Checkout and backend delivery calculations remain unchanged.
 - Preview flag and draft use localStorage only. No public visitors, backend/database settings, production theme, product/order data or deployment are changed.
-- Latest follow-up CI is pending after this code update; manual browser/mobile acceptance is still required.
+- Latest CI run [#44689507077](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44689507077) passed for head `c892527`: 22 tests passed, production audit found 0 vulnerabilities, and frontend build succeeded. Manual browser/mobile acceptance is still required.
+
+
+## Main-branch cleanup note
+- During implementation, an unused `previewTheme.js` helper was briefly created directly on `main` and immediately removed in a follow-up commit. It was not imported by the main application. The main branch now has no preview helper/test files; whether the hosting provider auto-deployed these no-op commits was not verified.
