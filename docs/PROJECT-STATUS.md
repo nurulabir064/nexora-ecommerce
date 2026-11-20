@@ -1,6 +1,6 @@
 # NEXORA — Verified project status
 
-Last source inspection: 14 November 2026. This is a source-code review, not a successful production deployment or end-to-end test report.
+Last source inspection: 20 November 2026. This update includes a code/CI review of the Customization Studio demo branch; it is not a browser or production acceptance test. This is a source-code review, not a successful production deployment or end-to-end test report.
 
 ## Implemented in source
 
@@ -25,7 +25,7 @@ Last source inspection: 14 November 2026. This is a source-code review, not a su
 - No online payment, bKash/Nagad integration, shipping-provider integration, email/SMS, password reset, email verification or image-upload service is connected.
 - Dependency-free unit tests cover CSRF middleware edge cases, Bangladesh support-contact normalization and WhatsApp order-link encoding (6/6 passing); API/database integration, browser, accessibility, load and penetration tests have not been run.
 - Dependencies could not be installed in the current environment: `npm install --ignore-scripts --no-audit --no-fund` timed out and the npm cache has no required packages; frontend production build and runtime verification therefore remain unverified.
-- A private `nurulabir064/nexora-ecommerce` GitHub repository exists, but the current source package has not been pushed to it. No MongoDB Atlas database, Render service, public HTTPS URL or production seed run has been configured/verified.
+- The GitHub repository contains the source and CI workflow. The Customization Studio demo is on draft PR #3 and has not been merged or deployed. The Render service and Atlas database are separate infrastructure; live runtime and production acceptance are not established by CI.
 
 ## Source checks actually performed
 
@@ -69,3 +69,12 @@ Last source inspection: 14 November 2026. This is a source-code review, not a su
 - TypeScript transpile parser: **38 JS/JSX files, 0 diagnostics**.
 - Root/frontend/backend package manifests parsed as JSON; `render.yaml` parsed as YAML; common private-key, cloud-key, GitHub-token and credentialed MongoDB URI patterns were not found in source files.
 - ZIP integrity check passed. These checks do not establish a production build, API/database integration, browser behavior or deployment readiness.
+
+
+## Customization Studio demo (20 November 2026)
+- Draft PR #3: [safe customization studio demo](https://github.com/nurulabir064/nexora-ecommerce/pull/3). It adds a local-only Store/Admin preview inside the admin dashboard; no settings persistence, publishing, API writes, database writes or commerce mutations are added.
+- Demo controls include store identity, brand colors, hero copy/image, homepage section visibility, responsive sample product columns, sample delivery display values and admin preview appearance. Reset returns the sample draft to its defaults.
+- QA review fixed the Admin quick-actions preview default and improved the sample product-grid responsiveness and numeric delivery-value inputs.
+- Added [Customization demo guide](CUSTOMIZATION-DEMO.md) describing local run steps, demo boundaries and a client customization/handoff workflow.
+- PR CI run [#44400286659](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44400286659) completed successfully for commit `eef70ce86faac40499ca578917896bd8c7e69205`. A subsequent code/documentation update was made on the PR branch and requires its own CI run; no browser/mobile visual inspection has been performed here.
+- **Not a production theme editor:** customization values do not save/export and are not applied to the real storefront. Client customization requires implementing approved values in the storefront, then integration testing and deployment.
