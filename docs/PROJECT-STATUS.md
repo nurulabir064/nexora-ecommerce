@@ -76,7 +76,7 @@ Last source inspection: 20 November 2026. This update includes a code/CI review 
 - Demo controls include store identity, brand colors, hero copy/image, homepage section visibility, responsive sample product columns, sample delivery display values and admin preview appearance. Reset returns the sample draft to its defaults.
 - QA review fixed the Admin quick-actions preview default and improved the sample product-grid responsiveness and numeric delivery-value inputs.
 - Added [Customization demo guide](CUSTOMIZATION-DEMO.md) describing local run steps, demo boundaries and a client customization/handoff workflow.
-- PR CI run [#44400286659](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44400286659) completed successfully for commit `eef70ce86faac40499ca578917896bd8c7e69205`. A subsequent code/documentation update was made on the PR branch and requires its own CI run; no browser/mobile visual inspection has been performed here.
+- PR CI run [#44400286659](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44400286659) completed successfully for commit `eef70ce86faac40499ca578917896bd8c7e69205`. PR #3's latest head (`3f8ae89`) passed CI run [#44688622239](https://github.com/nurulabir064/nexora-ecommerce/actions/runs/44688622239), including production audit, tests and frontend build. No browser/mobile visual inspection has been performed here.
 - **Not a production theme editor:** customization values do not save/export and are not applied to the real storefront. Client customization requires implementing approved values in the storefront, then integration testing and deployment.
 
 
