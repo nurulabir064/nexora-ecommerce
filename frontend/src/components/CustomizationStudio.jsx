@@ -82,7 +82,7 @@ export default function CustomizationStudio() {
       const saved = localStorage.getItem(STORAGE_KEY);
       if (!saved) return;
       const parsed = JSON.parse(saved);
-      if (validateDraft(parsed?.draft)) {
+      if (parsed?.schemaVersion === 1 && validateDraft(parsed?.draft)) {
         setDraft(parsed.draft);
         setSavedAt(parsed.savedAt || '');
       } else localStorage.removeItem(STORAGE_KEY);
@@ -116,7 +116,7 @@ export default function CustomizationStudio() {
     link.href = url;
     link.download = 'nexora-customization-demo.json';
     link.click();
-    URL.revokeObjectURL(url);
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
     setNotice('Configuration exported. It is a proposal file, not a live-store update.');
   };
   const importDraft = async event => {
@@ -135,7 +135,7 @@ export default function CustomizationStudio() {
     setDraft(initialDraft);
     setSavedAt('');
     setNotice('Preview reset to the default demo.');
-    try { localStorage.removeItem(STORAGE_KEY); } catch { /* storage may be unavailable */ }
+    try { localStorage.removeItem(STORAGE_KEY); localStorage.removeItem(PREVIEW_ACTIVE_KEY); } catch { /* storage may be unavailable */ }
   };
 
   return <section className="mt-5 space-y-5">
