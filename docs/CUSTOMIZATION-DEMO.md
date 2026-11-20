@@ -21,12 +21,14 @@ The admin page still uses the existing API for its other dashboard data. The Stu
 - Sample delivery fee and free-delivery threshold (display only)
 - Admin preview title/accent, compact cards and quick-action visibility
 - Store/Admin preview switch and Reset Demo
+- Save a draft in this browser (localStorage), import/export versioned JSON configuration
 
 ## Important boundaries
-- Changes are in React state only. Refreshing or leaving the page resets the draft.
+- Unsaved changes are in React state only. Save Draft stores the configuration in this browser's localStorage; refreshing restores that local draft.
+- Export JSON creates a configuration file that can be transferred to another browser; Import JSON validates the schema and loads it into the preview.
 - The preview uses sample products and sample admin metrics, not actual customer/store data.
 - Delivery values are sample text only. Checkout pricing and backend settings are not changed.
-- It does not save, publish, export settings, or modify the actual storefront.
+- Local Save/Import/Export does not publish or modify the actual storefront. The JSON is a proposal/configuration snapshot, not a live theme settings file.
 - It is not a tenant/multi-store system and does not provide a customer-facing theme editor.
 - External hero image previews accept HTTPS URLs. Confirm image licensing and availability before using an image in a client deliverable.
 - Do not describe the demo as a production customization feature or promise persistence.
