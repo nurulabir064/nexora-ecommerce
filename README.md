@@ -11,7 +11,7 @@ NEXORA is a Bangladesh-focused, single-vendor store concept (BDT / ৳, English,
 - `frontend/` — React, Vite, Tailwind CSS customer storefront (home, shop, product details, cart, wishlist, checkout, account and orders).
 - `backend/` — Express 5 API, Mongoose models, authentication, validation, commerce and admin routes.
 - `demo/` — standalone visual storefront and local-only admin preview.
-- `docs/` — architecture, API, security, deployment, release audit and [Customization demo guide](docs/CUSTOMIZATION-DEMO.md).
+- `docs/` — architecture, API, security, deployment, release audit and [Customization demo guide](docs/CUSTOMIZATION-DEMO.md) (including local save/import/export).
 - `render.yaml` — Render Blueprint for a single-origin Node web service.
 
 ## Runtime and development
