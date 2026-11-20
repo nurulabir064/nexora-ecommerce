@@ -40,7 +40,7 @@ function validateDraft(value) {
   if (Object.entries(limits).some(([key, max]) => value[key].length > max)) return false;
   if (!['2', '3', '4'].includes(value.productColumns)) return false;
   if (!['#' + value.primaryColor.slice(1), '#' + value.darkColor.slice(1), '#' + value.adminAccent.slice(1)].every(color => /^#[0-9a-fA-F]{6}$/.test(color))) return false;
-  if (!/^\\d{0,6}$/.test(value.demoShippingFee) || !/^\\d{0,8}$/.test(value.demoFreeShippingThreshold)) return false;
+  if (!/^\d{0,6}$/.test(value.demoShippingFee) || !/^\d{0,8}$/.test(value.demoFreeShippingThreshold)) return false;
   if (value.heroImage) {
     try { if (new URL(value.heroImage).protocol !== 'https:') return false; } catch { return false; }
   }
