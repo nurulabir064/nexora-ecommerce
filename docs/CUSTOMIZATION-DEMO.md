@@ -36,7 +36,7 @@ The admin page still uses the existing API for its other dashboard data. The Stu
 ## Customizing it for a client
 1. Gather the client's logo, brand colors, store name, product categories, copy, images and required pages.
 2. Agree on the exact scope (design, product data, content, integrations, hosting, support and revisions).
-3. Use the Studio to illustrate the proposed visual direction. Record the selected values; the demo does not export them.
+3. Use the Studio to illustrate the proposed visual direction. Save the draft locally and export the JSON configuration for the handoff. Implement the approved values in the actual storefront; the JSON does not apply itself.
 4. Implement approved values in the actual React storefront and its theme/layout components. Do not simply change demo state and claim the live store is customized.
 5. Add and verify client-owned product images and content; test all API-backed commerce flows and admin permissions.
 6. Deploy to a client-approved environment, test mobile and desktop, and hand over documented credentials through a secure method (never in source control).
