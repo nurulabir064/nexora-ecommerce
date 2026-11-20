@@ -27,7 +27,7 @@ const initialDraft = {
 const STORAGE_KEY = 'nexora-customization-demo-v1';
 
 function validateDraft(value) {
-  if (!value || typeof value !== 'object' || Array.isArray(value)) return false;
+  if (!value || typeof value !== 'object' || Array.isArray(value) || Object.keys(value).length !== Object.keys(initialDraft).length || Object.keys(value).some(key => !Object.hasOwn(initialDraft, key))) return false;
   for (const [key, defaultValue] of Object.entries(initialDraft)) {
     const item = value[key];
     if (typeof defaultValue === 'boolean') {
@@ -39,7 +39,7 @@ function validateDraft(value) {
   const limits = { storeName: 32, announcement: 100, heroEyebrow: 70, heroTitle: 90, heroDescription: 240, heroImage: 500, promoText: 90, demoShippingFee: 6, demoFreeShippingThreshold: 8, adminTitle: 50 };
   if (Object.entries(limits).some(([key, max]) => value[key].length > max)) return false;
   if (!['2', '3', '4'].includes(value.productColumns)) return false;
-  if (!['#' + value.primaryColor.slice(1), '#' + value.darkColor.slice(1), '#' + value.adminAccent.slice(1)].every(color => /^#[0-9a-fA-F]{6}$/.test(color))) return false;
+  if (![value.primaryColor, value.darkColor, value.adminAccent].every(color => /^#[0-9a-fA-F]{6}$/.test(color))) return false;
   if (!/^\d{0,6}$/.test(value.demoShippingFee) || !/^\d{0,8}$/.test(value.demoFreeShippingThreshold)) return false;
   if (value.heroImage) {
     try { if (new URL(value.heroImage).protocol !== 'https:') return false; } catch { return false; }
@@ -136,7 +136,7 @@ export default function CustomizationStudio() {
       } else localStorage.removeItem(STORAGE_KEY);
     } catch { localStorage.removeItem(STORAGE_KEY); }
   }, []);
-  const update = (key, value) => { setDraft(current => ({ ...current, [key]: value })); setNotice(''); };
+  const update = (key, value) => { setDraft(current => ({ ...current, [key]: value })); setSavedAt(''); setNotice(''); };
   const saveDraft = () => {
     try {
       if (!validateDraft(draft)) { setNotice('Please correct the invalid values before saving.'); return; }
@@ -178,7 +178,7 @@ export default function CustomizationStudio() {
 
   return <section className="mt-5 space-y-5">
     <div className="flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4">
-      <div className="flex gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-amber-700" size={18}/><div><p className="text-xs font-bold text-amber-900">Demo mode · Changes are temporary</p><p className="mt-1 max-w-2xl text-[11px] leading-5 text-amber-800">This studio uses local page state and sample preview data only. It does not call the API, save settings, or modify products, orders, delivery fees, or the database.</p></div></div>
+      <div className="flex gap-3"><ShieldCheck className="mt-0.5 shrink-0 text-amber-700" size={18}/><div><p className="text-xs font-bold text-amber-900">Demo mode · Changes are temporary</p><p className="mt-1 max-w-2xl text-[11px] leading-5 text-amber-800">This studio uses sample preview data. Drafts may be saved only in this browser or exported as JSON; it does not call the API, publish settings, or modify products, orders, delivery fees, or the database.</p></div></div>
       <div className="flex flex-wrap gap-2">
         <button type="button" onClick={saveDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Save size={13}/> Save draft</button>
         <button type="button" onClick={exportDraft} className="inline-flex items-center gap-2 rounded-full border border-amber-300 bg-white px-3 py-2 text-[10px] font-bold text-amber-900"><Download size={13}/> Export JSON</button>
